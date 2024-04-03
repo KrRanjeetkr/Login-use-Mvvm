@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".RegisterActivity">
+    tools:context=".view.RegisterActivity">
 
     <RelativeLayout
         android:id="@+id/progressbar"
@@ -120,6 +120,7 @@
                     android:hint="@string/conform_password"
                     android:inputType="textPassword"
                     android:maxLength="15"
+                    android:layout_marginTop="8dp"
                     android:paddingHorizontal="8dp"
                     android:paddingVertical="10dp" />
 

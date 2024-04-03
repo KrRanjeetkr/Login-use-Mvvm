@@ -5,9 +5,11 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.authentication.data.RegisterBody
 import com.example.authentication.data.User
 import com.example.authentication.data.ValidateEmailBody
 import com.example.authentication.repository.AuthRepository
+import com.example.authentication.utils.AuthToken
 import com.example.authentication.utils.RequestStatus
 import kotlinx.coroutines.launch
 
@@ -35,6 +37,30 @@ class RegisterActivityViewModel(val authRepository: AuthRepository, val applicat
                     is RequestStatus.Success -> {
                         isLoading.value  = false
                         isUniqueEmail.value = it.data.isUnique
+                    }
+
+                    is RequestStatus.Error -> {
+                        isLoading.value  = false
+                        errorMessage.value = it.message
+                    }
+                }
+            }
+        }
+    }
+
+    fun registerUser(body: RegisterBody){
+        viewModelScope.launch {
+            authRepository.registerUser(body).collect{
+                when(it){
+                    is RequestStatus.Waiting -> {
+                        isLoading.value  = true
+                    }
+
+                    is RequestStatus.Success -> {
+                        isLoading.value  = false
+                        user.value = it.data.user
+                        //save token using shared preference
+                        AuthToken.getInstance(application.baseContext).token = it.data.token
                     }
 
                     is RequestStatus.Error -> {

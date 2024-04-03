@@ -1,15 +1,23 @@
-package com.example.authentication
+package com.example.authentication.view
 
+import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Color
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.util.Log
 import android.util.Patterns
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
+import com.example.authentication.R
+import com.example.authentication.data.RegisterBody
+import com.example.authentication.data.ValidateEmailBody
 import com.example.authentication.databinding.ActivityRegisterBinding
 import com.example.authentication.repository.AuthRepository
 import com.example.authentication.utils.ApiService
@@ -17,7 +25,8 @@ import com.example.authentication.view_model.RegisterActivityViewModel
 import com.example.authentication.view_model.RegisterActivityViewModelFactory
 import java.lang.StringBuilder
 
-class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocusChangeListener, View.OnKeyListener {
+class RegisterActivity : AppCompatActivity(), View.OnClickListener,
+    View.OnFocusChangeListener, View.OnKeyListener, TextWatcher {
 
     private lateinit var binding: ActivityRegisterBinding
     private lateinit var mViewModel: RegisterActivityViewModel
@@ -30,6 +39,10 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         binding.emailEdt.onFocusChangeListener = this
         binding.passwordEdt.onFocusChangeListener = this
         binding.conformPasswordEdt.onFocusChangeListener = this
+        binding.conformPasswordEdt.setOnKeyListener(this)
+        binding.conformPasswordEdt.addTextChangedListener(this)
+        binding.registerBtn.setOnClickListener(this)
+
         mViewModel = ViewModelProvider(this, RegisterActivityViewModelFactory(AuthRepository(ApiService.getServices
             ()), application)).get(RegisterActivityViewModel::class.java)
 
@@ -39,6 +52,24 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
     private fun setupObservers() {
         mViewModel.getIsLoading().observe(this){
             binding.progressbar.isVisible = it
+        }
+
+        mViewModel.getIsUnique().observe(this){
+            if (validateEmail(shouldUpdateView = false)){
+                if (it){
+                    binding.emailLayout.apply {
+                        if (isErrorEnabled) isErrorEnabled = false
+                        setStartIconDrawable(R.drawable.ic_check)
+                        setStartIconTintList(ColorStateList.valueOf(Color.GREEN))
+                    }
+                }else{
+                    binding.emailLayout.apply {
+                        if (startIconDrawable != null) startIconDrawable = null
+                        isErrorEnabled = true
+                        error = "Email is Already Taken"
+                    }
+                }
+            }
         }
 
         mViewModel.getErrorMessage().observe(this){
@@ -68,17 +99,28 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
                                 error = entry.value
                             }
                         }
-
-                        else -> {}
+//                        else -> {}
                     }
                 }else{
                     message.append(entry.value).append("\n")
                 }
+
+                if (message.isNotEmpty()){
+                    AlertDialog.Builder(this)
+                        .setIcon(R.drawable.ic_info)
+                        .setTitle("INFORMATION")
+                        .setMessage(message)
+                        .setPositiveButton("Ok"){dialog, _ -> dialog!!.dismiss()}
+                        .show()
+                }
+
             }
         }
 
         mViewModel.getUSer().observe(this){
-
+            if (it != null){
+                startActivity(Intent(this, HomeActivity::class.java))
+            }
         }
     }
 
@@ -98,7 +140,7 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         return errorMessage == null
     }
 
-    private fun validateEmail() : Boolean {
+    private fun validateEmail(shouldUpdateView: Boolean = true) : Boolean {
         var errorMessage: String? = null
         val value: String = binding.emailEdt.text.toString()
         if (value.isEmpty()){
@@ -107,7 +149,7 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             errorMessage = "Email Address is Invalid"
         }
 
-        if (errorMessage != null){
+        if (errorMessage != null && shouldUpdateView){
             binding.emailLayout.apply {
                 isErrorEnabled = true
                 error = errorMessage
@@ -117,7 +159,7 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         return errorMessage == null
     }
 
-    private fun validatePassword() : Boolean {
+    private fun validatePassword(shouldUpdateView: Boolean = true) : Boolean {
         var errorMessage: String? = null
         val value: String = binding.passwordEdt.text.toString()
         if (value.isEmpty()){
@@ -126,7 +168,7 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             errorMessage = "Password must be 6 character long"
         }
 
-        if (errorMessage != null){
+        if (errorMessage != null && shouldUpdateView){
             binding.passwordLayout.apply {
                 isErrorEnabled = true
                 error = errorMessage
@@ -136,7 +178,7 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         return errorMessage == null
     }
 
-    private fun validateConformPassword() : Boolean {
+    private fun validateConformPassword(shouldUpdateView: Boolean = true) : Boolean {
         var errorMessage: String? = null
         val value: String = binding.conformPasswordEdt.text.toString()
         if (value.isEmpty()){
@@ -145,7 +187,7 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             errorMessage = "Conform Password must be 6 character long"
         }
 
-        if (errorMessage != null){
+        if (errorMessage != null && shouldUpdateView){
             binding.conformPasswordLayout.apply {
                 isErrorEnabled = true
                 error = errorMessage
@@ -155,7 +197,7 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         return errorMessage == null
     }
 
-    private fun validatePasswordAndConformPassword() : Boolean {
+    private fun validatePasswordAndConformPassword(shouldUpdateView: Boolean = true) : Boolean {
         var errorMessage:String? = null
         val password = binding.passwordEdt.text.toString()
         val confirmPassword = binding.conformPasswordEdt.text.toString()
@@ -163,7 +205,7 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             errorMessage = "confirmPassword doesn't match with password"
         }
 
-        if (errorMessage != null){
+        if (errorMessage != null && shouldUpdateView){
             binding.passwordLayout.apply {
                 isErrorEnabled = true
                 error = errorMessage
@@ -174,6 +216,8 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
     }
 
     override fun onClick(view: View?) {
+        if (view != null && view.id == R.id.registerBtn)
+            onSubmit()
     }
 
     override fun onFocusChange(view: View?, hasFocus: Boolean) {
@@ -197,6 +241,7 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
                     }else{
                         if (validateEmail()){
                             //do validation for it's uniqueness
+                            mViewModel.validateEmailAddress(ValidateEmailBody(binding.emailEdt.text!!.toString()))
                         }
                     }
                 }
@@ -243,7 +288,50 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         }
     }
 
-    override fun onKey(view: View?, event: Int, eventKey: KeyEvent?): Boolean {
+    override fun onKey(view: View?, keyCode: Int, eventKey: KeyEvent?): Boolean {
+        if (KeyEvent.KEYCODE_ENTER == keyCode && eventKey!!.action == KeyEvent.ACTION_UP){
+            // do registration
+            onSubmit()
+        }
+
         return false
+    }
+
+    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
+    }
+
+    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+        if (validatePassword(shouldUpdateView = false) && validateConformPassword(shouldUpdateView = false)
+            && validatePasswordAndConformPassword(shouldUpdateView = false)){
+            binding.conformPasswordLayout.apply {
+                if (isErrorEnabled) isErrorEnabled = false
+                setStartIconDrawable(R.drawable.ic_check)
+                setStartIconTintList(ColorStateList.valueOf(Color.GREEN))
+            }
+        }else{
+            if (binding.conformPasswordLayout.startIconDrawable != null)
+                binding.conformPasswordLayout.startIconDrawable = null
+        }
+    }
+
+    override fun afterTextChanged(s: Editable?) {
+    }
+
+    private fun onSubmit(){
+        if (validate()){
+            //make api response
+            mViewModel.registerUser(RegisterBody(binding.fullNameEdt.text!!.toString(), binding.emailEdt.text!!.toString(), binding.passwordEdt.text!!.toString()))
+        }
+    }
+
+    private fun validate() : Boolean{
+        var isValid = true
+
+        if (!validateFullName()) isValid = false
+        if (!validateEmail()) isValid = false
+        if (!validatePassword()) isValid = false
+        if (!validateConformPassword()) isValid = false
+        if (isValid && !validatePasswordAndConformPassword()) isValid = false
+        return isValid
     }
 }
