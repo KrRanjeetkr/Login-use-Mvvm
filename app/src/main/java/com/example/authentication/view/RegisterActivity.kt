@@ -7,7 +7,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.util.Patterns
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -21,6 +20,7 @@ import com.example.authentication.data.ValidateEmailBody
 import com.example.authentication.databinding.ActivityRegisterBinding
 import com.example.authentication.repository.AuthRepository
 import com.example.authentication.utils.ApiService
+import com.example.authentication.utils.VibrateView
 import com.example.authentication.view_model.RegisterActivityViewModel
 import com.example.authentication.view_model.RegisterActivityViewModelFactory
 import java.lang.StringBuilder
@@ -124,7 +124,7 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener,
         }
     }
 
-    private fun validateFullName() : Boolean {
+    private fun validateFullName(shouldVibrateView: Boolean = true) : Boolean {
         var errorMessage: String? = null
         val value: String = binding.fullNameEdt.text.toString()
         if (value.isEmpty()){
@@ -135,12 +135,13 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener,
             binding.fullNameLayout.apply {
                 isErrorEnabled = true
                 error = errorMessage
+                if (shouldVibrateView) VibrateView.vibrate(this@RegisterActivity, this)
             }
         }
         return errorMessage == null
     }
 
-    private fun validateEmail(shouldUpdateView: Boolean = true) : Boolean {
+    private fun validateEmail(shouldUpdateView: Boolean = true, shouldVibrateView: Boolean = true) : Boolean {
         var errorMessage: String? = null
         val value: String = binding.emailEdt.text.toString()
         if (value.isEmpty()){
@@ -153,13 +154,14 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener,
             binding.emailLayout.apply {
                 isErrorEnabled = true
                 error = errorMessage
+               if (shouldVibrateView) VibrateView.vibrate(this@RegisterActivity, this)
             }
         }
 
         return errorMessage == null
     }
 
-    private fun validatePassword(shouldUpdateView: Boolean = true) : Boolean {
+    private fun validatePassword(shouldUpdateView: Boolean = true, shouldVibrateView: Boolean = true) : Boolean {
         var errorMessage: String? = null
         val value: String = binding.passwordEdt.text.toString()
         if (value.isEmpty()){
@@ -172,13 +174,14 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener,
             binding.passwordLayout.apply {
                 isErrorEnabled = true
                 error = errorMessage
+                if (shouldVibrateView) VibrateView.vibrate(this@RegisterActivity, this)
             }
         }
 
         return errorMessage == null
     }
 
-    private fun validateConformPassword(shouldUpdateView: Boolean = true) : Boolean {
+    private fun validateConformPassword(shouldUpdateView: Boolean = true, shouldVibrateView: Boolean = true) : Boolean {
         var errorMessage: String? = null
         val value: String = binding.conformPasswordEdt.text.toString()
         if (value.isEmpty()){
@@ -191,13 +194,14 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener,
             binding.conformPasswordLayout.apply {
                 isErrorEnabled = true
                 error = errorMessage
+                if (shouldVibrateView) VibrateView.vibrate(this@RegisterActivity, this)
             }
         }
 
         return errorMessage == null
     }
 
-    private fun validatePasswordAndConformPassword(shouldUpdateView: Boolean = true) : Boolean {
+    private fun validatePasswordAndConformPassword(shouldUpdateView: Boolean = true, shouldVibrateView: Boolean = true) : Boolean {
         var errorMessage:String? = null
         val password = binding.passwordEdt.text.toString()
         val confirmPassword = binding.conformPasswordEdt.text.toString()
@@ -209,6 +213,7 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener,
             binding.passwordLayout.apply {
                 isErrorEnabled = true
                 error = errorMessage
+                if (shouldVibrateView) VibrateView.vibrate(this@RegisterActivity, this)
             }
         }
 
@@ -327,11 +332,15 @@ class RegisterActivity : AppCompatActivity(), View.OnClickListener,
     private fun validate() : Boolean{
         var isValid = true
 
-        if (!validateFullName()) isValid = false
-        if (!validateEmail()) isValid = false
-        if (!validatePassword()) isValid = false
-        if (!validateConformPassword()) isValid = false
-        if (isValid && !validatePasswordAndConformPassword()) isValid = false
+        if (!validateFullName(shouldVibrateView = false)) isValid = false
+        if (!validateEmail(shouldVibrateView = false)) isValid = false
+        if (!validatePassword(shouldVibrateView = false)) isValid = false
+        if (!validateConformPassword(shouldVibrateView = false)) isValid = false
+        if (isValid && !validatePasswordAndConformPassword(shouldVibrateView = false)) isValid = false
+
+        if (!isValid) VibrateView.vibrate(this, binding.cardView)
+
         return isValid
     }
+
 }

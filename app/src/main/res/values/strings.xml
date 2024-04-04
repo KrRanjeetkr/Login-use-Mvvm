@@ -5,4 +5,7 @@
     <string name="password">Password</string>
     <string name="conform_password">Conform Password</string>
     <string name="register">Register</string>
+    <string name="login">Login</string>
+    <string name="loginWithGoogle">Login With Google\n</string>
+    <string name="if_new_user_info">If New User Is Click</string>
 </resources>
