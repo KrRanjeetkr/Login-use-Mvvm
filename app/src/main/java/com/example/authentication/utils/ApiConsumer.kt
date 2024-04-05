@@ -1,7 +1,8 @@
 package com.example.authentication.utils
 
 import com.example.authentication.data.RegisterBody
-import com.example.authentication.data.RegisterResponse
+import com.example.authentication.data.AuthResponse
+import com.example.authentication.data.LoginBody
 import com.example.authentication.data.UniqueEmailValidateResponse
 import com.example.authentication.data.ValidateEmailBody
 import retrofit2.Response
@@ -14,6 +15,9 @@ interface ApiConsumer {
     suspend fun validateEmailAddress(@Body body: ValidateEmailBody) : Response<UniqueEmailValidateResponse>
 
     @POST("user/register")
-    suspend fun registerUser(@Body body: RegisterBody): Response<RegisterResponse>
+    suspend fun registerUser(@Body body: RegisterBody): Response<AuthResponse>
+
+    @POST("user/login")
+    suspend fun loginUser(@Body body: LoginBody): Response<AuthResponse>
 
 }
